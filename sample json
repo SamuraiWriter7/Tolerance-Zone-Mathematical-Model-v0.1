@@ -1,0 +1,436 @@
+{
+  "tolerance_zone": {
+    "id": "tolerance-zone-v0.1",
+    "title": "Tolerance Zone Mathematical Model v0.1",
+    "short_name": "TZM v0.1",
+    "version": "0.1.0",
+    "status": "draft-core",
+    "language": "ja",
+    "parent_system": "Immune Royalty OS v0.1",
+    "purpose": {
+      "summary": "類似構造への過剰反応を抑えつつ、独立した新芽・同期的到達・十分な変容を持つ派生を保護するための免疫寛容モデル。",
+      "objectives": [
+        "盗用や擬似構造は見逃さない",
+        "シンクロニシティや独立創造は攻撃しない",
+        "類似のみを理由とした即時排除を防ぐ",
+        "新芽保護を数理的に扱う",
+        "protect / tolerate / hold / reject-candidate を分離する"
+      ]
+    },
+    "design_principles": [
+      {
+        "id": "tz-dp-01",
+        "name": "tolerance_before_rejection",
+        "description": "排除の前に保留・観察・寛容を差し込む"
+      },
+      {
+        "id": "tz-dp-02",
+        "name": "path_and_transformation_first",
+        "description": "類似度単独ではなく、経路独立性と変容を主要軸に置く"
+      },
+      {
+        "id": "tz-dp-03",
+        "name": "novelty_bias_for_young_structures",
+        "description": "新規構造には限定的な初期保護を与える"
+      },
+      {
+        "id": "tz-dp-04",
+        "name": "boundary_safety",
+        "description": "自己/非自己境界が曖昧な場合は即裁定せず保留する"
+      },
+      {
+        "id": "tz-dp-05",
+        "name": "reject_requires_separate_confirmation",
+        "description": "Tolerance Score 単独では reject せず、擬似構造判定と連動させる"
+      }
+    ],
+    "variables": {
+      "core": {
+        "S": {
+          "name": "Similarity Score",
+          "range": [0.0, 1.0],
+          "meaning": "構造類似度"
+        },
+        "P": {
+          "name": "Path Independence Score",
+          "range": [0.0, 1.0],
+          "meaning": "生成経路の独立性"
+        },
+        "T": {
+          "name": "Transformation Score",
+          "range": [0.0, 1.0],
+          "meaning": "親構造からの実質的変容量"
+        }
+      },
+      "immune_support": {
+        "B": {
+          "name": "Boundary Confusion Score",
+          "range": [0.0, 1.0],
+          "meaning": "自己/非自己境界の混乱度"
+        },
+        "I": {
+          "name": "Inflammation Score",
+          "range": [0.0, 1.0],
+          "meaning": "過敏反応リスク"
+        }
+      },
+      "novelty_support": {
+        "W": {
+          "name": "Novelty Window Factor",
+          "range": [0.0, 1.0],
+          "meaning": "新規保護期間内にあるかを示す補助値"
+        }
+      }
+    },
+    "formulas": {
+      "novelty_window_factor": {
+        "expression": "W = max(0, 1 - age_days / novelty_protection_window_days)",
+        "inputs": [
+          "age_days",
+          "novelty_protection_window_days"
+        ],
+        "output": "W",
+        "meaning": "生成直後ほど高く、保護期間終了とともに 0 に近づく"
+      },
+      "tolerance_potential": {
+        "expression": "TP = (0.45 * P) + (0.35 * T) + (0.20 * W)",
+        "inputs": [
+          "P",
+          "T",
+          "W"
+        ],
+        "output": "TP",
+        "meaning": "この構造をすぐに攻撃してはいけない理由の強さ"
+      },
+      "immune_pressure": {
+        "expression": "IP = (0.60 * B) + (0.40 * I)",
+        "inputs": [
+          "B",
+          "I"
+        ],
+        "output": "IP",
+        "meaning": "安全に protect できるかにかかる抑制圧"
+      },
+      "tolerance_score": {
+        "expression": "Z_tol = TP - IP",
+        "expanded_expression": "Z_tol = (0.45 * P) + (0.35 * T) + (0.20 * W) - (0.60 * B) - (0.40 * I)",
+        "inputs": [
+          "TP",
+          "IP"
+        ],
+        "output": "Z_tol",
+        "meaning": "寛容判定の最終スコア"
+      }
+    },
+    "activation": {
+      "name": "Similarity Activation",
+      "description": "誤攻撃の危険がある候補だけを審査帯に入れる",
+      "parameters": {
+        "theta_hold": 0.78,
+        "delta": 0.12
+      },
+      "expression": "S >= (theta_hold - delta)",
+      "derived_min_similarity": 0.66,
+      "interpretation": {
+        "below_band": "S < 0.66 の場合は Tolerance Zone の主審査対象外",
+        "in_band": "S >= 0.66 の場合は Tolerance Zone の審査対象"
+      }
+    },
+    "thresholds": {
+      "protect_zone_min": 0.55,
+      "tolerate_zone_min": 0.40,
+      "hold_zone_min": 0.25,
+      "protect_constraints": {
+        "P_min": 0.72,
+        "T_min": 0.40,
+        "B_max": 0.50
+      },
+      "tolerate_constraints": {
+        "T_min": 0.30,
+        "B_max": 0.50
+      },
+      "hold_trigger": {
+        "B_min": 0.50
+      },
+      "novelty_window_days": 90
+    },
+    "evaluation_pipeline": [
+      {
+        "step": 1,
+        "name": "similarity_activation",
+        "check": "S >= 0.66",
+        "fail_action": "outside_tolerance_band",
+        "pass_action": "continue"
+      },
+      {
+        "step": 2,
+        "name": "boundary_safety_check",
+        "check": "B >= 0.50",
+        "action": "hold_for_boundary_review",
+        "priority": "high"
+      },
+      {
+        "step": 3,
+        "name": "compute_window_factor",
+        "action": "calculate_W"
+      },
+      {
+        "step": 4,
+        "name": "compute_tolerance_potential",
+        "action": "calculate_TP"
+      },
+      {
+        "step": 5,
+        "name": "compute_immune_pressure",
+        "action": "calculate_IP"
+      },
+      {
+        "step": 6,
+        "name": "compute_tolerance_score",
+        "action": "calculate_Z_tol"
+      },
+      {
+        "step": 7,
+        "name": "zone_assignment",
+        "action": "assign_protect_tolerate_hold_or_reject_candidate"
+      },
+      {
+        "step": 8,
+        "name": "pseudo_structure_cross_check",
+        "action": "combine_with_R_pseudo_before_final_reject"
+      }
+    ],
+    "zones": {
+      "protect": {
+        "condition": "Z_tol >= 0.55 AND P >= 0.72 AND T >= 0.40 AND B < 0.50",
+        "classification_candidates": [
+          "independent_novelty",
+          "synchronistic_convergence"
+        ],
+        "default_action": "protect",
+        "meaning": "独立性・変容・安全性が十分ある"
+      },
+      "tolerate": {
+        "condition": "0.40 <= Z_tol < 0.55 AND T >= 0.30 AND B < 0.50",
+        "classification_candidates": [
+          "tolerated_derivation"
+        ],
+        "default_action": "tolerate",
+        "meaning": "派生だが攻撃不要。還元配分へ回せる"
+      },
+      "hold": {
+        "condition": "0.25 <= Z_tol < 0.40 OR B >= 0.50",
+        "classification_candidates": [
+          "boundary_uncertain",
+          "review_required"
+        ],
+        "default_action": "hold",
+        "meaning": "即裁定せず追加審査へ回す"
+      },
+      "reject_candidate": {
+        "condition": "Z_tol < 0.25",
+        "classification_candidates": [
+          "reject_candidate"
+        ],
+        "default_action": "reject_candidate",
+        "meaning": "Tolerance Zone 側からの保護はかからないが、これだけで即 reject しない"
+      }
+    },
+    "precedence_rules": [
+      {
+        "id": "tz-pr-01",
+        "priority": 1,
+        "condition": "B >= 0.50",
+        "action": "hold_for_boundary_review",
+        "reason": "境界混乱は最優先で保留"
+      },
+      {
+        "id": "tz-pr-02",
+        "priority": 2,
+        "condition": "R_pseudo >= 0.78 AND P < 0.35 AND T < 0.25",
+        "action": "pseudo_structure_candidate",
+        "reason": "擬似構造疑いが強い"
+      },
+      {
+        "id": "tz-pr-03",
+        "priority": 3,
+        "condition": "Z_tol >= 0.55",
+        "action": "protect",
+        "reason": "十分な寛容スコア"
+      },
+      {
+        "id": "tz-pr-04",
+        "priority": 4,
+        "condition": "0.40 <= Z_tol < 0.55",
+        "action": "tolerate",
+        "reason": "派生として許容可能"
+      },
+      {
+        "id": "tz-pr-05",
+        "priority": 5,
+        "condition": "0.25 <= Z_tol < 0.40",
+        "action": "hold",
+        "reason": "追加審査が妥当"
+      },
+      {
+        "id": "tz-pr-06",
+        "priority": 6,
+        "condition": "Z_tol < 0.25 AND R_pseudo >= 0.78",
+        "action": "reject",
+        "reason": "低寛容かつ擬似構造リスク高"
+      }
+    ],
+    "integration_with_pseudo_detection": {
+      "description": "Tolerance Zone は擬似構造判定を置き換えるものではない。最終 reject は R_pseudo と組み合わせて実行する。",
+      "required_external_metrics": [
+        "R_pseudo"
+      ],
+      "safe_reject_policy": [
+        "Z_tol < 0.25 だけでは reject しない",
+        "R_pseudo の閾値超過を要求する",
+        "境界混乱時は reject より hold を優先する"
+      ]
+    },
+    "novelty_window_policy": {
+      "description": "新規構造の発芽初期に限定的な保護バイアスを与える",
+      "effects": [
+        "hold / protect 側へわずかに寄せる",
+        "既存構造との近さだけで新芽を即排除しない",
+        "老化した旧痕跡が新芽を塞ぐのを防ぐ"
+      ],
+      "constraints": [
+        "W は補助項である",
+        "P や T が極端に低い擬似構造は救済しない"
+      ]
+    },
+    "recommended_outputs": [
+      "activation_result",
+      "W",
+      "TP",
+      "IP",
+      "Z_tol",
+      "zone_assignment",
+      "triggered_precedence_rules",
+      "final_recommended_action",
+      "human_readable_reason"
+    ],
+    "example_cases": [
+      {
+        "id": "case-01",
+        "name": "independent_arrival",
+        "inputs": {
+          "S": 0.82,
+          "P": 0.84,
+          "T": 0.48,
+          "B": 0.12,
+          "I": 0.10,
+          "W": 0.70
+        },
+        "calculations": {
+          "TP": 0.686,
+          "IP": 0.112,
+          "Z_tol": 0.574
+        },
+        "result": {
+          "zone": "protect",
+          "reason": "構造は近いが、経路独立性と変容が十分"
+        }
+      },
+      {
+        "id": "case-02",
+        "name": "derivation_needing_review",
+        "inputs": {
+          "S": 0.80,
+          "P": 0.58,
+          "T": 0.44,
+          "B": 0.18,
+          "I": 0.16,
+          "W": 0.40
+        },
+        "calculations": {
+          "TP": 0.495,
+          "IP": 0.172,
+          "Z_tol": 0.323
+        },
+        "result": {
+          "zone": "hold",
+          "reason": "派生としては有望だが、自動 tolerate には慎重"
+        }
+      },
+      {
+        "id": "case-03",
+        "name": "pseudo_structure_like_case",
+        "inputs": {
+          "S": 0.93,
+          "P": 0.18,
+          "T": 0.12,
+          "B": 0.14,
+          "I": 0.20,
+          "W": 0.85
+        },
+        "calculations": {
+          "note": "W が高くても P と T が低すぎるため保護されない"
+        },
+        "result": {
+          "zone": "reject_candidate",
+          "reason": "Tolerance Zone は保護せず、R_pseudo 判定へ接続"
+        }
+      }
+    ],
+    "governance": {
+      "tuning_policy": "human-supervised",
+      "review_metrics": [
+        "false_positive_rate",
+        "false_negative_rate",
+        "novelty_survival_rate",
+        "hold_to_protect_conversion_rate",
+        "hold_to_reject_conversion_rate"
+      ],
+      "adjustment_targets": [
+        "theta_hold",
+        "delta",
+        "protect_zone_min",
+        "tolerate_zone_min",
+        "hold_zone_min",
+        "P_min",
+        "T_min",
+        "B_trigger"
+      ],
+      "prohibited_behaviors": [
+        "similarity_only_rejection",
+        "automatic_reject_without_pseudo_cross_check",
+        "ignoring_boundary_confusion",
+        "using_novelty_window_to_rescue_low-P-low-T cases"
+      ]
+    },
+    "implementation_notes": [
+      "v0.1 は最初の可動モデルであり、厳密理論の完成版ではない",
+      "排除の数理ではなく、過敏反応を抑える数理として設計する",
+      "まずは protect / tolerate / hold / reject-candidate の分離を安定させる",
+      "Reject は必ず pseudo_structure_detection と連動させる",
+      "実運用では事例ベースで閾値を微調整する"
+    ],
+    "future_extensions": [
+      {
+        "id": "tz-ext-01",
+        "name": "auto_tuning",
+        "description": "偽陽性率と新芽生存率に基づく閾値自動調整"
+      },
+      {
+        "id": "tz-ext-02",
+        "name": "domain_profiles",
+        "description": "分野ごとの Tolerance Zone プロファイル切替"
+      },
+      {
+        "id": "tz-ext-03",
+        "name": "probabilistic_hold_model",
+        "description": "単純閾値ではなく確率的 hold 判定へ拡張"
+      },
+      {
+        "id": "tz-ext-04",
+        "name": "immune_map_binding",
+        "description": "Immune Map 可視化レイヤーへの接続"
+      }
+    ]
+  }
+}
