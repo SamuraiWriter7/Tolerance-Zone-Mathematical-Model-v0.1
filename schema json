@@ -1,0 +1,474 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/tolerance-zone-v0.1.schema.json",
+  "title": "Tolerance Zone Mathematical Model v0.1 Schema",
+  "description": "JSON Schema for Tolerance Zone Mathematical Model v0.1.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["tolerance_zone"],
+  "properties": {
+    "tolerance_zone": {
+      "$ref": "#/$defs/ToleranceZone"
+    }
+  },
+  "$defs": {
+    "Range01": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "NumberPair": {
+      "type": "array",
+      "prefixItems": [
+        { "type": "number" },
+        { "type": "number" }
+      ],
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "StringArray": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "NamedDescription": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "description"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" }
+      }
+    },
+    "VariableDef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "range", "meaning"],
+      "properties": {
+        "name": { "type": "string" },
+        "range": { "$ref": "#/$defs/NumberPair" },
+        "meaning": { "type": "string" }
+      }
+    },
+    "FormulaDef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["expression", "inputs", "output"],
+      "properties": {
+        "expression": { "type": "string" },
+        "expanded_expression": { "type": "string" },
+        "inputs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "output": { "type": "string" },
+        "meaning": { "type": "string" }
+      }
+    },
+    "EvaluationStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["step", "name"],
+      "properties": {
+        "step": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "name": { "type": "string" },
+        "check": { "type": "string" },
+        "fail_action": { "type": "string" },
+        "pass_action": { "type": "string" },
+        "action": { "type": "string" },
+        "priority": { "type": "string" }
+      }
+    },
+    "ZoneDef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "condition",
+        "classification_candidates",
+        "default_action",
+        "meaning"
+      ],
+      "properties": {
+        "condition": { "type": "string" },
+        "classification_candidates": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "default_action": { "type": "string" },
+        "meaning": { "type": "string" }
+      }
+    },
+    "PrecedenceRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "priority", "condition", "action", "reason"],
+      "properties": {
+        "id": { "type": "string" },
+        "priority": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "condition": { "type": "string" },
+        "action": { "type": "string" },
+        "reason": { "type": "string" }
+      }
+    },
+    "ExampleCase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "inputs", "calculations", "result"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["S", "P", "T", "B", "I", "W"],
+          "properties": {
+            "S": { "$ref": "#/$defs/Range01" },
+            "P": { "$ref": "#/$defs/Range01" },
+            "T": { "$ref": "#/$defs/Range01" },
+            "B": { "$ref": "#/$defs/Range01" },
+            "I": { "$ref": "#/$defs/Range01" },
+            "W": { "$ref": "#/$defs/Range01" }
+          }
+        },
+        "calculations": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "TP": { "type": "number" },
+            "IP": { "type": "number" },
+            "Z_tol": { "type": "number" },
+            "note": { "type": "string" }
+          }
+        },
+        "result": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["zone", "reason"],
+          "properties": {
+            "zone": { "type": "string" },
+            "reason": { "type": "string" }
+          }
+        }
+      }
+    },
+    "FutureExtension": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "description"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" }
+      }
+    },
+    "ToleranceZone": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "short_name",
+        "version",
+        "status",
+        "language",
+        "parent_system",
+        "purpose",
+        "design_principles",
+        "variables",
+        "formulas",
+        "activation",
+        "thresholds",
+        "evaluation_pipeline",
+        "zones",
+        "precedence_rules",
+        "integration_with_pseudo_detection",
+        "novelty_window_policy",
+        "recommended_outputs",
+        "example_cases",
+        "governance",
+        "implementation_notes",
+        "future_extensions"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "const": "tolerance-zone-v0.1"
+        },
+        "title": {
+          "type": "string",
+          "const": "Tolerance Zone Mathematical Model v0.1"
+        },
+        "short_name": {
+          "type": "string",
+          "const": "TZM v0.1"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^0\\.1\\.0$"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["draft-core"]
+        },
+        "language": {
+          "type": "string",
+          "enum": ["ja", "en"]
+        },
+        "parent_system": {
+          "type": "string"
+        },
+        "purpose": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["summary", "objectives"],
+          "properties": {
+            "summary": { "type": "string" },
+            "objectives": {
+              "type": "array",
+              "items": { "type": "string" },
+              "minItems": 1
+            }
+          }
+        },
+        "design_principles": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/NamedDescription" },
+          "minItems": 1
+        },
+        "variables": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["core", "immune_support", "novelty_support"],
+          "properties": {
+            "core": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["S", "P", "T"],
+              "properties": {
+                "S": { "$ref": "#/$defs/VariableDef" },
+                "P": { "$ref": "#/$defs/VariableDef" },
+                "T": { "$ref": "#/$defs/VariableDef" }
+              }
+            },
+            "immune_support": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["B", "I"],
+              "properties": {
+                "B": { "$ref": "#/$defs/VariableDef" },
+                "I": { "$ref": "#/$defs/VariableDef" }
+              }
+            },
+            "novelty_support": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["W"],
+              "properties": {
+                "W": { "$ref": "#/$defs/VariableDef" }
+              }
+            }
+          }
+        },
+        "formulas": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "novelty_window_factor",
+            "tolerance_potential",
+            "immune_pressure",
+            "tolerance_score"
+          ],
+          "properties": {
+            "novelty_window_factor": { "$ref": "#/$defs/FormulaDef" },
+            "tolerance_potential": { "$ref": "#/$defs/FormulaDef" },
+            "immune_pressure": { "$ref": "#/$defs/FormulaDef" },
+            "tolerance_score": { "$ref": "#/$defs/FormulaDef" }
+          }
+        },
+        "activation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "name",
+            "description",
+            "parameters",
+            "expression",
+            "derived_min_similarity",
+            "interpretation"
+          ],
+          "properties": {
+            "name": { "type": "string" },
+            "description": { "type": "string" },
+            "parameters": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["theta_hold", "delta"],
+              "properties": {
+                "theta_hold": { "$ref": "#/$defs/Range01" },
+                "delta": { "$ref": "#/$defs/Range01" }
+              }
+            },
+            "expression": { "type": "string" },
+            "derived_min_similarity": { "$ref": "#/$defs/Range01" },
+            "interpretation": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["below_band", "in_band"],
+              "properties": {
+                "below_band": { "type": "string" },
+                "in_band": { "type": "string" }
+              }
+            }
+          }
+        },
+        "thresholds": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "protect_zone_min",
+            "tolerate_zone_min",
+            "hold_zone_min",
+            "protect_constraints",
+            "tolerate_constraints",
+            "hold_trigger",
+            "novelty_window_days"
+          ],
+          "properties": {
+            "protect_zone_min": { "$ref": "#/$defs/Range01" },
+            "tolerate_zone_min": { "$ref": "#/$defs/Range01" },
+            "hold_zone_min": { "$ref": "#/$defs/Range01" },
+            "protect_constraints": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["P_min", "T_min", "B_max"],
+              "properties": {
+                "P_min": { "$ref": "#/$defs/Range01" },
+                "T_min": { "$ref": "#/$defs/Range01" },
+                "B_max": { "$ref": "#/$defs/Range01" }
+              }
+            },
+            "tolerate_constraints": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["T_min", "B_max"],
+              "properties": {
+                "T_min": { "$ref": "#/$defs/Range01" },
+                "B_max": { "$ref": "#/$defs/Range01" }
+              }
+            },
+            "hold_trigger": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["B_min"],
+              "properties": {
+                "B_min": { "$ref": "#/$defs/Range01" }
+              }
+            },
+            "novelty_window_days": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "evaluation_pipeline": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/EvaluationStep" },
+          "minItems": 1
+        },
+        "zones": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["protect", "tolerate", "hold", "reject_candidate"],
+          "properties": {
+            "protect": { "$ref": "#/$defs/ZoneDef" },
+            "tolerate": { "$ref": "#/$defs/ZoneDef" },
+            "hold": { "$ref": "#/$defs/ZoneDef" },
+            "reject_candidate": { "$ref": "#/$defs/ZoneDef" }
+          }
+        },
+        "precedence_rules": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/PrecedenceRule" },
+          "minItems": 1
+        },
+        "integration_with_pseudo_detection": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "description",
+            "required_external_metrics",
+            "safe_reject_policy"
+          ],
+          "properties": {
+            "description": { "type": "string" },
+            "required_external_metrics": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "safe_reject_policy": {
+              "$ref": "#/$defs/StringArray"
+            }
+          }
+        },
+        "novelty_window_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["description", "effects", "constraints"],
+          "properties": {
+            "description": { "type": "string" },
+            "effects": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "constraints": {
+              "$ref": "#/$defs/StringArray"
+            }
+          }
+        },
+        "recommended_outputs": {
+          "$ref": "#/$defs/StringArray"
+        },
+        "example_cases": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ExampleCase" },
+          "minItems": 1
+        },
+        "governance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "tuning_policy",
+            "review_metrics",
+            "adjustment_targets",
+            "prohibited_behaviors"
+          ],
+          "properties": {
+            "tuning_policy": { "type": "string" },
+            "review_metrics": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "adjustment_targets": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "prohibited_behaviors": {
+              "$ref": "#/$defs/StringArray"
+            }
+          }
+        },
+        "implementation_notes": {
+          "$ref": "#/$defs/StringArray"
+        },
+        "future_extensions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/FutureExtension" }
+        }
+      }
+    }
+  }
+}
