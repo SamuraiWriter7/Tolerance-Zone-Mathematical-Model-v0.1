@@ -436,3 +436,75 @@ Tolerance Zone 数理モデル v0.1 とは、
 似ている構造を即座に敵とみなさず、
 独立性・変容・新芽保護を数理的に評価して、
 protect / tolerate / hold / reject-candidate を分けるための免疫寛容モデルです。
+
+Schema Usage
+
+This repository provides JSON Schemas and sample files for validating the current draft specifications.
+
+Available schema files
+immune-royalty-os-v0.1.schema.json
+immune-royalty-os-v0.1.sample.json
+tolerance-zone-v0.1.schema.json
+tolerance-zone-v0.1.sample.json
+What is validated
+
+Each schema is used for two purposes:
+
+Schema validation
+Checks whether the schema itself is structurally valid.
+Sample validation
+Checks whether the provided sample JSON conforms to the schema.
+
+This makes the repository usable both as a conceptual specification and as a machine-checkable draft.
+
+Validate locally with AJV
+
+You can validate the files locally with ajv-cli.
+
+Immune Royalty OS
+npx --yes ajv-cli@5.0.0 compile \
+  -s immune-royalty-os-v0.1.schema.json \
+  --spec=draft2020 \
+  --strict=false
+
+npx --yes ajv-cli@5.0.0 validate \
+  -s immune-royalty-os-v0.1.schema.json \
+  -d immune-royalty-os-v0.1.sample.json \
+  --spec=draft2020 \
+  --strict=false \
+  --errors=text
+Tolerance Zone
+npx --yes ajv-cli@5.0.0 compile \
+  -s tolerance-zone-v0.1.schema.json \
+  --spec=draft2020 \
+  --strict=false
+
+npx --yes ajv-cli@5.0.0 validate \
+  -s tolerance-zone-v0.1.schema.json \
+  -d tolerance-zone-v0.1.sample.json \
+  --spec=draft2020 \
+  --strict=false \
+  --errors=text
+Validate in GitHub Actions
+
+This repository also includes a GitHub Actions workflow that validates:
+
+the schema files themselves
+the sample JSON files against each schema
+
+The workflow is intended as a minimum safety check for draft evolution.
+If a schema is broken or a sample drifts from the spec, the workflow will fail.
+
+Recommended workflow
+
+When updating a draft spec:
+
+edit the YAML / README / conceptual definition
+update the JSON Schema
+update the sample JSON
+run local validation
+push and confirm GitHub Actions passes
+Design note
+
+The schemas are intentionally strict around core structure, while allowing human-readable formulas and descriptive fields to remain flexible.
+This keeps the specifications machine-checkable without forcing premature over-formalization of the conceptual layer.
