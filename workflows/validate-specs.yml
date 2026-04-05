@@ -1,0 +1,77 @@
+name: Validate JSON Specs
+
+on:
+  push:
+    paths:
+      - ".github/workflows/validate-specs.yml"
+      - "immune-royalty-os-v0.1.schema.json"
+      - "immune-royalty-os-v0.1.sample.json"
+      - "tolerance-zone-v0.1.schema.json"
+      - "tolerance-zone-v0.1.sample.json"
+  pull_request:
+    paths:
+      - ".github/workflows/validate-specs.yml"
+      - "immune-royalty-os-v0.1.schema.json"
+      - "immune-royalty-os-v0.1.sample.json"
+      - "tolerance-zone-v0.1.schema.json"
+      - "tolerance-zone-v0.1.sample.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: "Immune Royalty OS"
+            schema: "immune-royalty-os-v0.1.schema.json"
+            sample: "immune-royalty-os-v0.1.sample.json"
+          - name: "Tolerance Zone"
+            schema: "tolerance-zone-v0.1.schema.json"
+            sample: "tolerance-zone-v0.1.sample.json"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          package-manager-cache: false
+
+      - name: Check files exist
+        run: |
+          echo "Schema: ${{ matrix.schema }}"
+          echo "Sample: ${{ matrix.sample }}"
+          test -f "${{ matrix.schema }}"
+          test -f "${{ matrix.sample }}"
+
+      - name: Validate schema structure
+        run: |
+          npx --yes ajv-cli@5.0.0 compile \
+            -s "${{ matrix.schema }}" \
+            --spec=draft2020 \
+            --strict=false
+
+      - name: Validate sample against schema
+        run: |
+          npx --yes ajv-cli@5.0.0 validate \
+            -s "${{ matrix.schema }}" \
+            -d "${{ matrix.sample }}" \
+            --spec=draft2020 \
+            --strict=false \
+            --errors=text
+
+      - name: Success summary
+        run: |
+          echo "Validated: ${{ matrix.name }}"
+          echo "Schema file: ${{ matrix.schema }}"
+          echo "Sample file: ${{ matrix.sample }}"
